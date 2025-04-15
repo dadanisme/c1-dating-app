@@ -14,7 +14,7 @@ struct MainTabView: View {
                 HomeView()
             }
             
-            Tab("My Trips", systemImage: "airplane") {
+            Tab("My Trips", systemImage: "list.bullet.rectangle.portrait.fill") {
                 Text("Not implemented yet")
             }
             

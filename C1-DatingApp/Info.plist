@@ -17,5 +17,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to find nearby places</string>
 </dict>
 </plist>

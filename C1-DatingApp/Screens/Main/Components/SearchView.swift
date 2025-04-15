@@ -1,30 +1,41 @@
-//
-//  SearchView.swift
-//  C1-DatingApp
-//
-//  Created by Ramdan on 11/04/25.
-//
-
-
 import SwiftUI
 
 struct SearchView: View {
-    @State var text: String = ""
-
+    @Binding var text: String
+    @FocusState private var isFocused: Bool
+    
+    var icon: String = "magnifyingglass"
+    var iconColor: Color = .gray
+    var placeholder: String = ""
+    var isAutoFocus: Bool = false
     var body: some View {
         HStack {
-            TextField("Where do you want to go?", text: $text)
+            Image(systemName: icon)
+                .foregroundColor(iconColor)
+
+            TextField(placeholder, text: $text)
                 .foregroundColor(.primary)
-            Image(systemName: "magnifyingglass") // 🔍 icon
-                .foregroundColor(.gray)
+                .focused($isFocused)
+
+            if !text.isEmpty {
+                Button(action: {
+                    text = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
         }
         .padding(10)
-        .background(Color(.systemGray6)) // light gray background
+        .background(Color(.systemGray6))
         .cornerRadius(10)
         .padding(.horizontal)
+        .onAppear {
+            if isAutoFocus {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isFocused = true
+                }
+            }
+        }
     }
-}
-
-#Preview {
-    SearchView()
 }

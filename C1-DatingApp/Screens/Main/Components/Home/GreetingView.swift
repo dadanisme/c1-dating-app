@@ -17,7 +17,7 @@ struct GreetingView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 NavigationLink {
-                    Text("To be implemented")
+                    TripInitView()
                 } label: {
                     HStack {
                         Text("Where do you want to go?")
