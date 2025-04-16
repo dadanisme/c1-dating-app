@@ -9,6 +9,8 @@ import SwiftUI
 
 struct GreetingView: View {
     @StateObject private var auth = AuthViewModel()
+    @EnvironmentObject var navManager: NavigationManager<HomeRoutes>
+    
     var body: some View {
         VStack {
             VStack {
@@ -16,13 +18,13 @@ struct GreetingView: View {
                     .foregroundStyle(.white)
                     .font(.title2)
                     .fontWeight(.bold)
-                NavigationLink {
-                    TripInitView()
-                } label: {
+                Button(action: {
+                    navManager.path.append(.tripInit)
+                }) {
                     HStack {
                         Text("Where do you want to go?")
                             .foregroundColor(.gray)
-
+                        
                         Spacer()
                         
                         Image(systemName: "magnifyingglass")

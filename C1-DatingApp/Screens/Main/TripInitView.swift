@@ -20,16 +20,9 @@ struct TripInitView: View {
     @FocusState private var focusedField: FieldFocus?
     @Environment(\.presentationMode) var presentationMode
     @GestureState private var dragOffset = CGSize.zero
-    
     @State private var activeShow: FieldFocus = .from
-    
-    func printResults() {
-        print("from results", fromModel.results)
-        print("to results", toModel.results)
-        
-        print(focusedField == .from ? "focused on from" : "focused on to")
-    }
-    
+    @State private var isCompleted: Bool = true
+ 
     var body: some View {
         VStack {
             TripInitSearchView(
@@ -44,45 +37,42 @@ struct TripInitView: View {
             .onChange(of: focusedField, {
                 if let focusedField = focusedField {
                     activeShow = focusedField
+                    isCompleted = false
                 }
             })
             
             ScrollView {
                 LazyVStack {
-                    let listData = {
-                        if activeShow == .from {
-                            return fromModel.results
-                        } else if activeShow == .to {
-                            return toModel.results
-                        } else {
-                            return []
-                        }
-                    }()
-                    
-                    ForEach(listData) { result in
-                        if activeShow == .from {
+                    if(!isCompleted) {
+                        let listData = {
+                            if activeShow == .from {
+                                return fromModel.results
+                            } else if activeShow == .to {
+                                return toModel.results
+                            } else {
+                                return []
+                            }
+                        }()
+                        
+                        ForEach(listData) { result in
                             Button(action: {
-                                fromModel.query = result.name
-                                fromPlace = result
-                                focusedField = .to
+                                if activeShow == .from {
+                                    fromModel.query = result.name
+                                    fromPlace = result
+                                    focusedField = .to
+                                } else {
+                                    toModel.query = result.name
+                                    toPlace = result
+                                    
+                                    isCompleted = true
+                                }
                             }) {
                                 TripInitResultItemView(result)
                             }
                             .buttonStyle(PlainButtonStyle())
-                        } else if activeShow == .to {
-                            NavigationLink {
-                                Text("To be implemented")
-                            } label: {
-                                Button(action: {
-                                    toModel.query = result.name
-                                    toPlace = result
-                                }) {
-                                    TripInitResultItemView(result)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
                         }
+                    } else {
+                        TripInitFormView()
                     }
                 }
                 .padding(.horizontal)

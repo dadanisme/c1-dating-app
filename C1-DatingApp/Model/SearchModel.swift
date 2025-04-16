@@ -76,7 +76,7 @@ class SearchViewModel: ObservableObject {
             
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = query
-            
+             
             if let userLocation = userLocation {
                 let region = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: 10000, longitudinalMeters: 10000)
                 request.region = region
@@ -86,7 +86,7 @@ class SearchViewModel: ObservableObject {
             
             do {
                 let response = try await search.start()
-                let newResults = response.mapItems.map { result in
+                 let newResults = response.mapItems.map { result in
                     let distance: CLLocationDistance? = {
                         guard let userLocation = userLocation else {
                             return nil

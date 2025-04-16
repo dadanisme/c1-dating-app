@@ -7,7 +7,6 @@
 
 import Foundation
 import FirebaseAuth
-import GoogleSignIn
 
 class AuthViewModel: ObservableObject {
     @Published var user: User?
