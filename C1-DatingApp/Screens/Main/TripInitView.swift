@@ -72,7 +72,10 @@ struct TripInitView: View {
                             .buttonStyle(PlainButtonStyle())
                         }
                     } else {
-                        TripInitFormView()
+                        TripInitFormView(
+                            from: fromPlace,
+                            to: toPlace
+                        )
                     }
                 }
                 .padding(.horizontal)

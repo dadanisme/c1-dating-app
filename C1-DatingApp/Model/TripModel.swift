@@ -6,13 +6,16 @@
 //
 
 import Foundation
+import FirebaseFirestore
+import CoreLocation
+import GeoFireUtils
 
-enum TravelType {
+enum TravelType: Codable {
     case passenger
     case driver
 }
 
-enum TravelMode {
+enum TravelMode: Codable {
     case fourWheels
     case twoWheels
 }
@@ -34,25 +37,33 @@ class NearbyTripModel: Identifiable {
     }
 }
 
-class Trip: Identifiable {
+struct TripLocation: Codable {
+    var latitute: Double
+    var longitude: Double
+    var geoHash: String
+    var name: String
+}
+
+struct Trip: Identifiable, Codable {
+    @DocumentID var id: String?
+    
     var type: TravelType
     var mode: TravelMode
     var date: Date
     var description: String = ""
     var vehicleType: String = ""
     var plateNumber: String = ""
-    var seats: Int = 0
-    var fee: Int = 0
+    var seats: String = "0"
+    var fee: String = "0"
+    var from: TripLocation?
+    var to: TripLocation?
     
-    init(type: TravelType, mode: TravelMode, date: Date, description: String? = nil, vehicleType: String? = nil, plateNumber: String? = nil, seats: Int? = nil, fee: Int? = nil) {
-        self.type = type
-        self.mode = mode
-        self.date = date
-        self.description = description ?? ""
-        self.vehicleType = vehicleType ?? ""
-        self.plateNumber = plateNumber ?? ""
-        self.seats = seats ?? 0
-        self.fee = fee ?? 0
+    mutating func injectLocation(from: Place, to: Place) {
+        let fromHash = GFUtils.geoHash(forLocation: CLLocationCoordinate2D(latitude: from.latitude, longitude: from.longitude))
+        let toHash = GFUtils.geoHash(forLocation: CLLocationCoordinate2D(latitude: to.latitude, longitude: to.longitude))
+        
+        self.from = TripLocation(latitute: from.latitude, longitude: from.longitude, geoHash: fromHash, name: from.name)
+        self.to = TripLocation(latitute: to.latitude, longitude: to.longitude, geoHash: toHash, name: to.name)
     }
 }
 
@@ -71,3 +82,24 @@ func generateDummyTrips() -> [NearbyTripModel] {
 }
 
 let dummyTrips = generateDummyTrips()
+
+func createTrip(trip: Trip, completion: @escaping (Result<String, Error>) -> Void) {
+    do {
+        let collectionRef = db.collection("trips")
+        let docRef = collectionRef.document() // Generate a reference with a known ID
+
+        let tripWithID = trip
+        // Optional: set the trip's ID if your Trip model has one
+        // tripWithID.id = docRef.documentID
+
+        try docRef.setData(from: tripWithID) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(docRef.documentID))
+            }
+        }
+    } catch {
+        completion(.failure(error)) // encoding error
+    }
+}

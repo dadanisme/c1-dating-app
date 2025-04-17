@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+import CoreLocation
 
 let initialTrip: Trip = Trip(
     type: .passenger,
@@ -17,58 +17,120 @@ let initialTrip: Trip = Trip(
 
 struct TripInitFormView: View {
     @State private var trip: Trip = initialTrip
+    @State private var isLoading: Bool = false
+    @State private var showAlert: Bool = false
+    
+    var from: Place?
+    var to: Place?
+    
     @EnvironmentObject var navManager: NavigationManager<HomeRoutes>
     
+    func createTripAction() {
+        // check if data present
+        let isDriverDataValid = trip.type == .driver && !trip.vehicleType.isEmpty && !trip.seats.isEmpty && !trip.fee.isEmpty
+        let isPlacePreset: Bool = from != nil && to != nil
+        
+        if !isDriverDataValid || !isPlacePreset {
+            showAlert = true
+            return
+        }
+        
+        isLoading = true
+        if let fromPlace = from, let toPlace = to {
+            trip.injectLocation(from: fromPlace, to: toPlace)
+        }
+        createTrip(trip: trip) { result in
+            isLoading = false
+            switch result {
+            case .success(let documentId):
+                navManager.path.append(.tripDetails(tripId: documentId))
+                print("Success")
+            case .failure(let error):
+                print("Error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Button(action: { trip.type = .passenger }) {
-                    TravelTypeView(
-                        text: "I am looking for a ride",
-                        icon: "figure.wave",
-                        isActive: trip.type == .passenger,
-                        width: 24
-                    )
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 8) {
+                    Button(action: { trip.type = .passenger }) {
+                        TravelTypeView(
+                            text: "I am looking for a ride",
+                            icon: "figure.wave",
+                            isActive: trip.type == .passenger,
+                            width: 24
+                        )
+                    }
+                    Button(action: { trip.type = .driver }) {
+                        TravelTypeView(
+                            text: "I am looking for passengers",
+                            icon: "figure.2",
+                            isActive: trip.type == .driver,
+                            width: 60
+                        )
+                    }
                 }
-                Button(action: { trip.type = .driver }) {
-                    TravelTypeView(
-                        text: "I am looking for passengers",
-                        icon: "figure.2",
-                        isActive: trip.type == .driver,
-                        width: 60
-                    )
+                DatePicker("Prefered Time", selection: $trip.date)
+                    .datePickerStyle(.compact)
+                    .font(.headline)
+                Picker("Mode", selection: $trip.mode) {
+                    Label("Two Wheeler", systemImage: "motorcycle.fill")
+                        .tag(TravelMode.twoWheels)
+                    Label("Four Wheeler", systemImage: "car.fill")
+                        .tag(TravelMode.fourWheels)
                 }
-            }
-            DatePicker("Prefered Time", selection: $trip.date)
-                .datePickerStyle(.compact)
-            Picker("Mode", selection: $trip.mode) {
-                Label("Two Wheeler", systemImage: "motorcycle.fill")
-                    .tag(TravelMode.twoWheels)
-                Label("Four Wheeler", systemImage: "car.fill")
-                    .tag(TravelMode.fourWheels)
-            }
-            .pickerStyle(.segmented)
-            
-            Text("Additional Note:")
-            TextEditor(text: $trip.description)
-                .frame(height: 150)
-                .padding()
+                .pickerStyle(.segmented)
+                
+                Text("Additional Note:")
+                    .font(.headline)
+                TextEditor(text: $trip.description)
+                    .frame(height: 150)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                    )
+                
+                
+                if(trip.type == .driver) {
+                    VStack(alignment: .leading) {
+                        Text("Vehicle Information")
+                            .font(.headline)
+                        AdditionalInput("Type", text: $trip.vehicleType)
+                        AdditionalInput("Plate Number", text: $trip.plateNumber)
+                        AdditionalInput("Seats Available", text: $trip.seats)
+                            .keyboardType(.decimalPad)
+                        AdditionalInput("Fee", text: $trip.fee)
+                            .keyboardType(.decimalPad)
+                    }
+                }
+                
+                
+                
+                Button(action: createTripAction) {
+                    Label(isLoading ? "Creating..." : "Find", systemImage: "magnifyingglass")
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.vertical, 16)
+                .background(.main)
+                .foregroundStyle(.white)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
-            Button("Find", systemImage: "magnifyingglass") {
-                navManager.path.append(.tripDetails(tripId: trip.id.hashValue.description))
+                .cornerRadius(8)
+                .disabled(isLoading)
             }
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity)
-            .background(.main)
-            .foregroundStyle(.white)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-            )
-            .cornerRadius(8)
+        }
+        .alert("Alert", isPresented: $showAlert) {
+            Button("OK", role: .cancel, action: {
+                self.showAlert = false
+            })
+        } message: {
+            Text("Please complete all the required fields.")
         }
     }
 }
@@ -77,13 +139,40 @@ struct TripInitFormView: View {
     TripInitFormView()
 }
 
+struct AdditionalInput: View {
+    @Binding var text: String
+    var label: String
+    
+    init(_ label: String, text: Binding<String>) {
+        self._text = text
+        self.label = label
+    }
+    
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .frame(width: 125, alignment: .leading)
+            TextField(label, text: $text)
+        }
+        .overlay(
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(.gray.opacity(0.5))
+                .offset(y: 10),
+            alignment: .bottom
+        )
+        .padding(.vertical, 5)
+    }
+}
+
 struct TravelTypeView: View {
     var text: String
     var icon: String
     var isActive: Bool = false
     var width: CGFloat?
     var height: CGFloat?
-
+    
     var body: some View {
         VStack {
             VStack {

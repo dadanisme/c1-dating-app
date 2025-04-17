@@ -67,7 +67,6 @@ class SearchViewModel: ObservableObject {
     
     private func performSearch(_ userLocation: CLLocation?) {
         searchTask?.cancel() // Cancel any ongoing search task
-        print(query)
         searchTask = Task {
             guard !query.isEmpty else {
                 await MainActor.run { results = [] }

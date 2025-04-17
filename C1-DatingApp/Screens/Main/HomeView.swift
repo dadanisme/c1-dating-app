@@ -28,7 +28,7 @@ struct HomeView: View {
                     case .tripInit:
                         TripInitView()
                     case .tripDetails(let id):
-                        Text("Trip Details \(id)")
+                        Text("Matching trip details for \(id)")
                 }
             }
         }

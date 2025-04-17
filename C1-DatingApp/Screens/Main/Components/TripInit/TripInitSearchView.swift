@@ -20,6 +20,7 @@ struct TripInitSearchView: View {
     
     func swapAddress() {
         (fromAddress, toAddress) = (toAddress, fromAddress)
+        (fromPlace, toPlace) = (toPlace, fromPlace)
     }
      
     var body: some View {
