@@ -44,6 +44,7 @@ struct NearbyTripView: View {
                     HStack {
                         Text(trip.user?.displayName ?? trip.createdBy ?? "Unknown")
                             .fontWeight(.semibold)
+                            .font(.system(size: 16))
                             .lineLimit(1)
                         
                         if trip.user?.isVerified ?? false {
