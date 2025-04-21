@@ -45,6 +45,7 @@ struct TripInitFormView: View {
                 isLoading = false
                 switch result {
                 case .success(let documentId):
+                    navManager.path.removeAll()
                     navManager.path.append(.tripDetails(tripId: documentId))
                 case .failure(let error):
                     print("Error: \(error.localizedDescription)")
