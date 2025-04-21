@@ -8,62 +8,80 @@
 import SwiftUI
 
 struct NearbyTripView: View {
-    var trip: NearbyTripModel
+    var trip: Trip
     var noTopPadding: Bool = false
     var noBottomPadding: Bool = false
+    @EnvironmentObject var navManager: NavigationManager<HomeRoutes>
     
     var body: some View {
         Section {
             HStack(alignment: .center, spacing: 12) {
-                Image("jensen_huang_1")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 80, height: 80)
-                    .clipped()
-                    .cornerRadius(5)
+                AsyncImage(url: URL(string: trip.user?.photoURL ?? "https://picsum.photos/200")) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView() // Placeholder while loading
+                            .frame(width: 80, height: 80)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 80, height: 80)
+                            .clipped()
+                            .cornerRadius(5)
+                    case .failure:
+                        Image("jensen_huang_1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 80, height: 80)
+                            .clipped()
+                            .cornerRadius(5)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
                 
                 VStack (alignment: .leading) {
                     HStack {
-                        Text("Jensen Huang")
+                        Text(trip.user?.displayName ?? trip.createdBy ?? "Unknown")
                             .fontWeight(.semibold)
-                        Image(systemName: "checkmark.shield.fill")
-                            .foregroundStyle(.main)
+                            .lineLimit(1)
+                        
+                        if trip.user?.isVerified ?? false {
+                            Image(systemName: "checkmark.shield.fill")
+                                .foregroundStyle(.main)
+                        }
                     }
                     HStack {
                         Image(systemName: "mappin.and.ellipse")
                             .resizable()
                             .frame(width: 12, height: 12)
                             .foregroundStyle(.red)
-                        Text("Uluwatu Temple")
+                        Text(trip.to?.name ?? "Unknown Location")
                             .font(.caption)
                     }
-                    Text("Thu, 21 Jan 2025, 13.00 WITA")
+                    Text(formatTimestamp(trip.createdAt))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
                 VStack {
-                    Text("Rp15.000")
+                    Text(formatToRupiah(trip.fee))
                         .font(.subheadline)
-                    NavigationLink {
-                        Text("Something")
-                    } label: {
-                        Button("Details", action: {
-                            //
-                        })
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .background(.main)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        .allowsHitTesting(false)
-                    }
+                    Button("Details", action: {
+                        navManager.path.append(.tripDetails(tripId: trip.id!))
+                    })
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .background(.main)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                    .allowsHitTesting(false)
                 }
             }
             .padding(.init(top: 5, leading: 5, bottom: 5, trailing: 10))
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)) // remove default inset
             .frame(maxWidth: .infinity)
-
+            
         }
         .background(
             RoundedRectangle(cornerRadius: 8)
@@ -77,10 +95,10 @@ struct NearbyTripView: View {
     }
 }
 
-#Preview {
-    NearbyTripView(
-        trip: NearbyTripModel(
-            imageName: "jensen_huang_1", name: "Jensen Huang", location: "Park23 City", time: "Thu, 21 Jan 2025, 13.00 WITA", price: 15000
-        )
-    )
-}
+//#Preview {
+//    NearbyTripView(
+//        trip: NearbyTripModel(
+//            imageName: "jensen_huang_1", name: "Jensen Huang", location: "Park23 City", time: "Thu, 21 Jan 2025, 13.00 WITA", price: 15000
+//        )
+//    )
+//}

@@ -48,13 +48,24 @@ struct LoginView: View {
             }
             
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
-            Auth.auth().signIn(with: credential) { _, error in
+            Auth.auth().signIn(with: credential) { data, error in
                 guard error == nil else {
                     isLoading = false
                     return
                 }
                 // At this point, our user is signed in
-                isLoading = false
+                if let user = data?.user {
+                    let docRef = db.collection("users").document(user.uid)
+                    docRef.setData([
+                        "displayName": user.displayName ?? "",
+                        "email": user.email ?? "",
+                        "photoURL": user.photoURL?.absoluteString ?? ""
+                    ], merge: true) { _ in
+                        isLoading = false
+                    }
+                } else {
+                    isLoading = false
+                }
             }
         }
     }

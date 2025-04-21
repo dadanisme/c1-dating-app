@@ -19,6 +19,7 @@ struct TripInitFormView: View {
     @State private var trip: Trip = initialTrip
     @State private var isLoading: Bool = false
     @State private var showAlert: Bool = false
+    @StateObject var auth = AuthViewModel()
     
     var from: Place?
     var to: Place?
@@ -28,9 +29,9 @@ struct TripInitFormView: View {
     func createTripAction() {
         // check if data present
         let isDriverDataValid = trip.type == .driver && !trip.vehicleType.isEmpty && !trip.seats.isEmpty && !trip.fee.isEmpty
-        let isPlacePreset: Bool = from != nil && to != nil
+        let isPlacePresent: Bool = from != nil && to != nil
         
-        if !isDriverDataValid || !isPlacePreset {
+        if (trip.type != .passenger && !isDriverDataValid) || !isPlacePresent {
             showAlert = true
             return
         }
@@ -39,14 +40,16 @@ struct TripInitFormView: View {
         if let fromPlace = from, let toPlace = to {
             trip.injectLocation(from: fromPlace, to: toPlace)
         }
-        createTrip(trip: trip) { result in
-            isLoading = false
-            switch result {
-            case .success(let documentId):
-                navManager.path.append(.tripDetails(tripId: documentId))
-                print("Success")
-            case .failure(let error):
-                print("Error: \(error.localizedDescription)")
+        if let userId = auth.user?.uid {
+            trip.createTrip(userId) { result in
+                isLoading = false
+                switch result {
+                case .success(let documentId):
+                    navManager.path.append(.tripDetails(tripId: documentId))
+                    print("Success")
+                case .failure(let error):
+                    print("Error: \(error.localizedDescription)")
+                }
             }
         }
     }
